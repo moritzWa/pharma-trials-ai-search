@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import { ChatMessage } from "../types/chat";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { TrialsTable } from "./TrialsTable";
 
 interface ChatInterfaceProps {
   messages: ChatMessage[];
@@ -90,17 +91,15 @@ export function ChatInterface({
                   </p>
                 )}
 
-                {/* Display results as JSON if present */}
+                {/* Display results table if present */}
                 {message.role === "assistant" &&
                   message.results &&
                   message.results.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-border">
-                      <p className="text-xs font-semibold mb-2">
-                        Results ({message.totalResults} trials found):
-                      </p>
-                      <pre className="text-xs bg-background p-3 rounded overflow-x-auto max-h-96 overflow-y-auto w-full">
-                        {JSON.stringify(message.results, null, 2)}
-                      </pre>
+                      <TrialsTable
+                        trials={message.results}
+                        totalResults={message.totalResults || message.results.length}
+                      />
                     </div>
                   )}
 

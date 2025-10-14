@@ -81,7 +81,7 @@ AI-powered search interface for clinical trials data from ClinicalTrials.gov.
 
 - **In-memory storage**: All data loaded into RAM (works for 1,000 trials, won't scale to millions)
 - **No pagination on backend**: Returns all results (limited to 50 by default)
-- **Client-side persistence**: Chat history stored in localStorage (5-10MB limit)
+- **Client-side persistence**: Chat history stored in localStorage (browser-dependent limits)
 - **No authentication**: Open access, no user accounts
 
 ### Future Improvements

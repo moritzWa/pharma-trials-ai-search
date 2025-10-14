@@ -3,52 +3,57 @@ import { getTrialsData } from '../data/dataLoader';
 
 /**
  * Calculate relevance score for a trial based on keywords
+ *
+ * Scoring weights (per keyword match):
+ * - Conditions: 10 (most specific indicator)
+ * - Title: 8 (directly describes study)
+ * - Official Title: 7 (alternative title)
+ * - Interventions: 5 (drug/treatment names)
+ * - Sponsor: 4 (organization conducting trial)
+ * - Summary: 2 (verbose, more noise)
  */
 function calculateRelevance(trial: ClinicalTrial, keywords: string[]): number {
-  let score = 0;
   const ps = trial.protocolSection;
 
-  keywords.forEach(keyword => {
+  // Extract searchable fields
+  const conditions = ps.conditionsModule?.conditions || [];
+  const title = ps.identificationModule?.briefTitle?.toLowerCase() || '';
+  const officialTitle = ps.identificationModule?.officialTitle?.toLowerCase() || '';
+  const interventions = ps.armsInterventionsModule?.interventions || [];
+  const summary = ps.descriptionModule?.briefSummary?.toLowerCase() || '';
+  const sponsor = ps.sponsorCollaboratorsModule?.leadSponsor?.name?.toLowerCase() || '';
+
+  let totalScore = 0;
+
+  // Score each keyword across all fields
+  for (const keyword of keywords) {
     const kw = keyword.toLowerCase();
+    let keywordScore = 0;
 
-    // Conditions (highest priority - 10 points)
-    const conditions = ps.conditionsModule?.conditions || [];
+    // Check each field (only count once per field)
     if (conditions.some(c => c.toLowerCase().includes(kw))) {
-      score += 10;
+      keywordScore += 10;
     }
-
-    // Title (high priority - 8 points)
-    const title = ps.identificationModule?.briefTitle?.toLowerCase() || '';
     if (title.includes(kw)) {
-      score += 8;
+      keywordScore += 8;
     }
-
-    // Official title (high priority - 7 points)
-    const officialTitle = ps.identificationModule?.officialTitle?.toLowerCase() || '';
     if (officialTitle.includes(kw)) {
-      score += 7;
+      keywordScore += 7;
     }
-
-    // Interventions (medium priority - 5 points)
-    const interventions = ps.armsInterventionsModule?.interventions || [];
     if (interventions.some(i => i.name?.toLowerCase().includes(kw))) {
-      score += 5;
+      keywordScore += 5;
     }
-
-    // Brief summary (low priority - 2 points)
-    const summary = ps.descriptionModule?.briefSummary?.toLowerCase() || '';
-    if (summary.includes(kw)) {
-      score += 2;
-    }
-
-    // Sponsor (medium priority - 4 points)
-    const sponsor = ps.sponsorCollaboratorsModule?.leadSponsor?.name?.toLowerCase() || '';
     if (sponsor.includes(kw)) {
-      score += 4;
+      keywordScore += 4;
     }
-  });
+    if (summary.includes(kw)) {
+      keywordScore += 2;
+    }
 
-  return score;
+    totalScore += keywordScore;
+  }
+
+  return totalScore;
 }
 
 /**
@@ -116,35 +121,45 @@ function applyFilters(trials: ClinicalTrial[], filters?: SearchQuery['filters'])
 export function searchTrials(query: SearchQuery): SearchResult {
   const allTrials = getTrialsData();
 
-  // Step 1: Apply filters
-  let filteredTrials = applyFilters(allTrials, query.filters);
+  // Step 1: Apply hard filters (phase, status, etc.)
+  const filteredTrials = applyFilters(allTrials, query.filters);
 
-  // Step 2: Apply keyword search and calculate relevance
-  let resultsWithScores: Array<{ trial: ClinicalTrial; score: number }> = [];
+  // Step 2: Apply keyword search and calculate relevance scores
+  let resultsWithScores: Array<{ trial: ClinicalTrial; score: number }>;
 
   if (query.keywords && query.keywords.length > 0) {
-    resultsWithScores = filteredTrials
-      .map(trial => ({
-        trial,
-        score: calculateRelevance(trial, query.keywords!)
-      }))
-      .filter(result => result.score > 0) // Only keep trials with matches
-      .sort((a, b) => b.score - a.score); // Sort by relevance
+    // Calculate relevance score for each trial
+    const scoredTrials = filteredTrials.map(trial => ({
+      trial,
+      score: calculateRelevance(trial, query.keywords!)
+    }));
+
+    // Filter out trials with no keyword matches
+    const matchingTrials = scoredTrials.filter(result => result.score > 0);
+
+    // Sort by relevance (highest score first)
+    const sortedTrials = matchingTrials.sort((a, b) => b.score - a.score);
+
+    resultsWithScores = sortedTrials;
   } else {
-    // No keywords - just return filtered results
+    // No keywords - return all filtered trials (unsorted)
     resultsWithScores = filteredTrials.map(trial => ({ trial, score: 0 }));
   }
 
-  // Step 3: Apply limit
+  // Step 3: Apply limit (default 50)
   const limit = query.limit || 50;
   const limitedResults = resultsWithScores.slice(0, limit);
 
+  // Step 4: Extract trials and build score map
+  const trials = limitedResults.map(r => r.trial);
+  const relevanceScores = new Map(
+    limitedResults.map(r => [r.trial.protocolSection.identificationModule.nctId, r.score])
+  );
+
   return {
-    trials: limitedResults.map(r => r.trial),
+    trials,
     totalResults: resultsWithScores.length,
     query,
-    relevanceScores: new Map(
-      limitedResults.map(r => [r.trial.protocolSection.identificationModule.nctId, r.score])
-    )
+    relevanceScores
   };
 }

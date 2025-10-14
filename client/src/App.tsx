@@ -34,6 +34,21 @@ function App() {
     setActiveThreadId(newThread.id);
   };
 
+  const handleDeleteThread = (threadId: string) => {
+    storage.deleteThread(threadId);
+    const updatedThreads = threads.filter(t => t.id !== threadId);
+    setThreads(updatedThreads);
+
+    // If deleting active thread, select another or create new
+    if (activeThreadId === threadId) {
+      if (updatedThreads.length > 0) {
+        setActiveThreadId(updatedThreads[0].id);
+      } else {
+        setActiveThreadId(null);
+      }
+    }
+  };
+
   const handleSendMessage = async (content: string) => {
     if (!activeThreadId) {
       createNewThread();
@@ -105,6 +120,7 @@ function App() {
         activeThreadId={activeThreadId}
         onSelectThread={setActiveThreadId}
         onNewChat={createNewThread}
+        onDeleteThread={handleDeleteThread}
       />
       <ChatInterface
         messages={activeThread?.messages || []}

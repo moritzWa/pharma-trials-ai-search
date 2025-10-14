@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { ChatMessage } from '../types/chat';
+import { Send } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import { ChatMessage } from "../types/chat";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 
 interface ChatInterfaceProps {
   messages: ChatMessage[];
@@ -10,12 +11,16 @@ interface ChatInterfaceProps {
   isLoading?: boolean;
 }
 
-export function ChatInterface({ messages, onSendMessage, isLoading }: ChatInterfaceProps) {
-  const [input, setInput] = useState('');
+export function ChatInterface({
+  messages,
+  onSendMessage,
+  isLoading,
+}: ChatInterfaceProps) {
+  const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -26,7 +31,7 @@ export function ChatInterface({ messages, onSendMessage, isLoading }: ChatInterf
     e.preventDefault();
     if (input.trim() && !isLoading) {
       onSendMessage(input.trim());
-      setInput('');
+      setInput("");
     }
   };
 
@@ -44,19 +49,61 @@ export function ChatInterface({ messages, onSendMessage, isLoading }: ChatInterf
           messages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${
+                message.role === "user" ? "justify-end" : "justify-start"
+              }`}
             >
               <div
                 className={`
-                  max-w-[70%] rounded-lg px-4 py-3
+                  rounded-lg px-4 py-3
                   ${
-                    message.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-foreground'
+                    message.results && message.results.length > 0
+                      ? "w-full max-w-4xl"
+                      : "max-w-[70%]"
+                  }
+                  ${
+                    message.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-foreground"
                   }
                 `}
               >
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                {/* Render markdown for assistant messages, plain text for user */}
+                {message.role === "assistant" ? (
+                  <div className="text-sm [&>p]:my-1">
+                    <ReactMarkdown
+                      components={{
+                        strong: ({ children }) => (
+                          <strong className="font-semibold text-foreground">
+                            {children}
+                          </strong>
+                        ),
+                        p: ({ children }) => <p className="my-1">{children}</p>,
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
+                ) : (
+                  <p className="text-sm whitespace-pre-wrap">
+                    {message.content}
+                  </p>
+                )}
+
+                {/* Display results as JSON if present */}
+                {message.role === "assistant" &&
+                  message.results &&
+                  message.results.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <p className="text-xs font-semibold mb-2">
+                        Results ({message.totalResults} trials found):
+                      </p>
+                      <pre className="text-xs bg-background p-3 rounded overflow-x-auto max-h-96 overflow-y-auto w-full">
+                        {JSON.stringify(message.results, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+
                 <p className="text-xs mt-1 opacity-70">
                   {new Date(message.timestamp).toLocaleTimeString()}
                 </p>
@@ -84,7 +131,11 @@ export function ChatInterface({ messages, onSendMessage, isLoading }: ChatInterf
             className="flex-1"
             disabled={isLoading}
           />
-          <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+          <Button
+            type="submit"
+            size="icon"
+            disabled={isLoading || !input.trim()}
+          >
             <Send className="h-4 w-4" />
           </Button>
         </form>

@@ -3,6 +3,9 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  results?: any[]; // Clinical trial results
+  totalResults?: number;
+  query?: any;
 }
 
 export interface ChatThread {

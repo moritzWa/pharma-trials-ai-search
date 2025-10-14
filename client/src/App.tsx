@@ -76,6 +76,9 @@ function App() {
         role: 'assistant',
         content: data.response,
         timestamp: Date.now(),
+        results: data.results,
+        totalResults: data.totalResults,
+        query: data.query,
       };
 
       // Update thread with assistant message

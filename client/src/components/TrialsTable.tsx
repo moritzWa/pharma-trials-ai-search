@@ -179,6 +179,7 @@ export function TrialsTable({ trials, totalResults }: TrialsTableProps) {
                 currentSortField={sortField}
                 currentSortOrder={sortOrder}
                 onSort={handleSort}
+                className="w-[200px]"
               />
             </TableRow>
           </TableHeader>

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -7,8 +7,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from './ui/table';
-import { Button } from './ui/button';
+} from "./ui/table";
 
 interface Trial {
   protocolSection: {
@@ -44,117 +43,143 @@ interface TrialsTableProps {
   totalResults: number;
 }
 
-type SortField = 'title' | 'status' | 'phase' | 'condition' | 'sponsor';
-type SortOrder = 'asc' | 'desc';
+type SortField = "title" | "status" | "phase" | "condition" | "sponsor";
+type SortOrder = "asc" | "desc";
+
+interface SortableHeaderProps {
+  field: SortField;
+  label: string;
+  currentSortField: SortField | null;
+  currentSortOrder: SortOrder;
+  onSort: (field: SortField) => void;
+  className?: string;
+}
+
+function SortableHeader({
+  field,
+  label,
+  currentSortField,
+  currentSortOrder,
+  onSort,
+  className = "",
+}: SortableHeaderProps) {
+  const isActive = currentSortField === field;
+
+  return (
+    <TableHead className={`p-0 ${className}`}>
+      <button
+        onClick={() => onSort(field)}
+        className={`w-full h-full px-2 py-2 flex items-center gap-2 hover:bg-muted transition-colors ${
+          isActive ? "bg-muted/50 font-semibold" : ""
+        }`}
+      >
+        <span>{label}</span>
+        {isActive ? (
+          currentSortOrder === "asc" ? (
+            <ArrowUp className="h-3 w-3" />
+          ) : (
+            <ArrowDown className="h-3 w-3" />
+          )
+        ) : (
+          <ArrowUpDown className="h-3 w-3 opacity-50" />
+        )}
+      </button>
+    </TableHead>
+  );
+}
 
 export function TrialsTable({ trials, totalResults }: TrialsTableProps) {
   const [sortField, setSortField] = useState<SortField | null>(null);
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
-      setSortOrder('asc');
+      setSortOrder("asc");
     }
   };
 
   const sortedTrials = [...trials].sort((a, b) => {
     if (!sortField) return 0;
 
-    let aValue = '';
-    let bValue = '';
+    let aValue = "";
+    let bValue = "";
 
     switch (sortField) {
-      case 'title':
-        aValue = a.protocolSection.identificationModule.briefTitle || '';
-        bValue = b.protocolSection.identificationModule.briefTitle || '';
+      case "title":
+        aValue = a.protocolSection.identificationModule.briefTitle || "";
+        bValue = b.protocolSection.identificationModule.briefTitle || "";
         break;
-      case 'status':
-        aValue = a.protocolSection.statusModule?.overallStatus || '';
-        bValue = b.protocolSection.statusModule?.overallStatus || '';
+      case "status":
+        aValue = a.protocolSection.statusModule?.overallStatus || "";
+        bValue = b.protocolSection.statusModule?.overallStatus || "";
         break;
-      case 'phase':
-        aValue = a.protocolSection.designModule?.phases?.[0] || '';
-        bValue = b.protocolSection.designModule?.phases?.[0] || '';
+      case "phase":
+        aValue = a.protocolSection.designModule?.phases?.[0] || "";
+        bValue = b.protocolSection.designModule?.phases?.[0] || "";
         break;
-      case 'condition':
-        aValue = a.protocolSection.conditionsModule?.conditions?.[0] || '';
-        bValue = b.protocolSection.conditionsModule?.conditions?.[0] || '';
+      case "condition":
+        aValue = a.protocolSection.conditionsModule?.conditions?.[0] || "";
+        bValue = b.protocolSection.conditionsModule?.conditions?.[0] || "";
         break;
-      case 'sponsor':
-        aValue = a.protocolSection.sponsorCollaboratorsModule?.leadSponsor?.name || '';
-        bValue = b.protocolSection.sponsorCollaboratorsModule?.leadSponsor?.name || '';
+      case "sponsor":
+        aValue =
+          a.protocolSection.sponsorCollaboratorsModule?.leadSponsor?.name || "";
+        bValue =
+          b.protocolSection.sponsorCollaboratorsModule?.leadSponsor?.name || "";
         break;
     }
 
     const comparison = aValue.localeCompare(bValue);
-    return sortOrder === 'asc' ? comparison : -comparison;
+    return sortOrder === "asc" ? comparison : -comparison;
   });
 
   return (
-    <div className="w-full">
-      <div className="rounded-md border">
+    <div className="w-full overflow-x-auto">
+      <div className="border">
         <Table>
-          <TableHeader className="bg-muted/50">
+          <TableHeader className="bg-primary-foreground">
             <TableRow>
               <TableHead className="w-[120px]">NCT ID</TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="-ml-3 h-8"
-                  onClick={() => handleSort('title')}
-                >
-                  Title
-                  <ArrowUpDown className="ml-2 h-3 w-3" />
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="-ml-3 h-8"
-                  onClick={() => handleSort('condition')}
-                >
-                  Condition
-                  <ArrowUpDown className="ml-2 h-3 w-3" />
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="-ml-3 h-8"
-                  onClick={() => handleSort('status')}
-                >
-                  Status
-                  <ArrowUpDown className="ml-2 h-3 w-3" />
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="-ml-3 h-8"
-                  onClick={() => handleSort('phase')}
-                >
-                  Phase
-                  <ArrowUpDown className="ml-2 h-3 w-3" />
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="-ml-3 h-8"
-                  onClick={() => handleSort('sponsor')}
-                >
-                  Sponsor
-                  <ArrowUpDown className="ml-2 h-3 w-3" />
-                </Button>
-              </TableHead>
+              <SortableHeader
+                field="title"
+                label="Title"
+                currentSortField={sortField}
+                currentSortOrder={sortOrder}
+                onSort={handleSort}
+                className="w-[400px]"
+              />
+              <SortableHeader
+                field="condition"
+                label="Condition"
+                currentSortField={sortField}
+                currentSortOrder={sortOrder}
+                onSort={handleSort}
+                className="w-[250px]"
+              />
+              <SortableHeader
+                field="status"
+                label="Status"
+                currentSortField={sortField}
+                currentSortOrder={sortOrder}
+                onSort={handleSort}
+              />
+              <SortableHeader
+                field="phase"
+                label="Phase"
+                currentSortField={sortField}
+                currentSortOrder={sortOrder}
+                onSort={handleSort}
+              />
+              <SortableHeader
+                field="sponsor"
+                label="Sponsor"
+                currentSortField={sortField}
+                currentSortOrder={sortOrder}
+                onSort={handleSort}
+              />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -179,26 +204,31 @@ export function TrialsTable({ trials, totalResults }: TrialsTableProps) {
                         {ps.identificationModule.nctId}
                       </a>
                     </TableCell>
-                    <TableCell className="max-w-md">
-                      <div className="line-clamp-2" title={ps.identificationModule.briefTitle}>
-                        {ps.identificationModule.briefTitle || 'N/A'}
+                    <TableCell>
+                      <div className="whitespace-normal break-words">
+                        {ps.identificationModule.briefTitle || "N/A"}
                       </div>
                     </TableCell>
-                    <TableCell className="max-w-xs">
-                      <div className="line-clamp-2">
-                        {ps.conditionsModule?.conditions?.slice(0, 3).join(', ') || 'N/A'}
+                    <TableCell>
+                      <div className="whitespace-normal break-words">
+                        {ps.conditionsModule?.conditions
+                          ?.slice(0, 3)
+                          .join(", ") || "N/A"}
                       </div>
                     </TableCell>
                     <TableCell>
                       <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-muted">
-                        {ps.statusModule?.overallStatus || 'N/A'}
+                        {ps.statusModule?.overallStatus || "N/A"}
                       </span>
                     </TableCell>
                     <TableCell>
-                      {ps.designModule?.phases?.join(', ') || 'N/A'}
+                      {ps.designModule?.phases?.join(", ") || "N/A"}
                     </TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {ps.sponsorCollaboratorsModule?.leadSponsor?.name || 'N/A'}
+                    <TableCell>
+                      <div className="whitespace-normal break-words">
+                        {ps.sponsorCollaboratorsModule?.leadSponsor?.name ||
+                          "N/A"}
+                      </div>
                     </TableCell>
                   </TableRow>
                 );

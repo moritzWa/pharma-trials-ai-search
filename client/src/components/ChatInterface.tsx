@@ -59,7 +59,7 @@ export function ChatInterface({
                   rounded-lg px-4 py-3
                   ${
                     message.results && message.results.length > 0
-                      ? "w-full max-w-4xl"
+                      ? "w-full"
                       : "max-w-[70%]"
                   }
                   ${

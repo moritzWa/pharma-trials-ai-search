@@ -113,3 +113,8 @@ The application already supports filtering by **phase, status, sponsor, interven
 **Implementation**: Update `calculateRelevance()` to require matches across all groups for AND logic, while still allowing synonym flexibility within each group. This enables precise queries like "NSCLC AND immunotherapy" while capturing all disease/treatment variations.
 
 **Extension**: The same grouped structure supports NOT logic by adding `excludeKeywords` groups that disqualify trials if matched.
+
+### Evaluating Result Completeness
+
+- **Eval set with expected trials**: Create a set of test queries with known NCT IDs that should appear in results (e.g., "NSCLC immunotherapy" should include NCT12345678). Run automated checks to verify all expected trials are returned.
+- **Manual review by domain experts**: Have users like Sarah review results for sample queries and flag missing trials. Track queries where important trials are absent and use those as regression tests/to improve the prompt/search logic.

@@ -62,33 +62,31 @@ AI-powered search interface for clinical trials data from ClinicalTrials.gov.
 - "Immunotherapy trials"
 - "Completed cancer trials"
 
-## Limitations
+## Questions
 
-### Data Coverage
+### a. Extending Filter Functionality
 
-- **Subset of fields**: Only key fields indexed (conditions, interventions, title, status, phase, sponsor)
-- **Missing fields**: Detailed outcomes, eligibility criteria, and study locations not fully searchable
-- **Dataset size**: Limited to top 1,000 trials from ClinicalTrials.gov
+The application already supports filtering by **phase, status, sponsor, intervention type, and country** (see [`search.ts`](server/src/services/search.ts)). To add new criteria:
 
-### Search Capabilities
+1. Add filter field to `SearchQuery` interface [`trial.ts`](server/src/types/trial.ts)
+2. Update LLM prompt to extract new parameter [`llm.ts`](server/src/services/llm.ts)
+3. Add filter logic to `applyFilters()` function [`search.ts`](server/src/services/search.ts)
 
-- **No vector search**: Relies on keyword matching, not semantic similarity
-- **No fuzzy matching**: Exact substring matching only (e.g., "NSCLC" won't match "non-small cell lung cancer" unless LLM expands it)
-- **Limited synonym handling**: LLM attempts to expand acronyms, but may miss edge cases
-- **No ranking by relevance**: Basic scoring system, not ML-based ranking
+### b. Compromises
 
-### Technical
+**Limited field coverage**: The ClinicalTrial interface only includes ~10 key properties out of 100+ available fields. This compromise prioritizes search quality for core fields (conditions, interventions, title, phase, sponsor) over comprehensive coverage. Indexing all fields would add complexity without clear value for the primary use case.
 
-- **In-memory storage**: All data loaded into RAM (works for 1,000 trials, won't scale to millions)
-- **No pagination on backend**: Returns all results (limited to 50 by default)
-- **Client-side persistence**: Chat history stored in localStorage (browser-dependent limits)
-- **No authentication**: Open access, no user accounts
+**In-memory storage**: Loading data into RAM rather than using a database simplifies deployment and reduces infrastructure requirements. This works for 1,000 trials but won't scale to the full 550K+ dataset.
 
-### Future Improvements
+**Basic keyword matching**: Simple substring matching instead of vector embeddings or fuzzy search keeps the implementation straightforward while relying on the LLM to handle synonyms and acronym expansion.
 
-- Add vector embeddings for semantic search
-- Implement fuzzy matching and advanced NLP
-- Support full dataset (400K+ trials) with database
-- Add more sophisticated result ranking
-- Build data table UI (currently shows raw JSON)
-- Export results to CSV
+### c. UX Improvement Priorities
+
+**User feedback-driven approach**: I would interview the ICP to understand their workflow pain points. Key questions: What data do they export? How do they share findings? What integrations do they need?
+
+**Top priorities based on competitive research workflows**:
+
+1. **CSV export** - Enable users to export filtered results for further analysis
+2. **AI-generated custom columns** - Let users define column titles (e.g., "Target molecule") and auto-populate values using LLM extraction
+3. **File upload integration** - Allow users to upload existing analysis files and find related trials
+4. **Saved searches** - Persist complex queries for repeated use

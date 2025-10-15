@@ -90,3 +90,26 @@ The application already supports filtering by **phase, status, sponsor, interven
 2. **AI-generated custom columns** - Let users define column titles (e.g., "Target molecule") and auto-populate values using LLM extraction
 3. **File upload integration** - Allow users to upload existing analysis files and find related trials
 4. **Saved searches** - Persist complex queries for repeated use
+
+## Bonus: Advanced Search Features
+
+### Synonym Handling & AND Logic
+
+**Current approach**: The LLM expands disease terms (e.g., "NSCLC" → ["NSCLC", "non-small cell lung cancer"]) and searches for any keyword match with relevance scoring.
+
+**Enhancement for precise AND logic**: Implement grouped keywords where synonyms are grouped together and groups are combined with boolean operators:
+
+```typescript
+// Structure
+{
+  keywordGroups: [
+    ["NSCLC", "non-small cell lung cancer", "non-small cell lung carcinoma"],  // Disease group
+    ["immunotherapy", "immune therapy", "checkpoint inhibitor"]                 // Treatment group
+  ],
+  groupLogic: "AND"  // Require at least one match from EACH group
+}
+```
+
+**Implementation**: Update `calculateRelevance()` to require matches across all groups for AND logic, while still allowing synonym flexibility within each group. This enables precise queries like "NSCLC AND immunotherapy" while capturing all disease/treatment variations.
+
+**Extension**: The same grouped structure supports NOT logic by adding `excludeKeywords` groups that disqualify trials if matched.

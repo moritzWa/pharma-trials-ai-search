@@ -1,10 +1,16 @@
-import { Send } from "lucide-react";
+import { Send, Info } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { ChatMessage } from "../types/chat";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { TrialsTable } from "./TrialsTable";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
 interface ChatInterfaceProps {
   messages: ChatMessage[];
@@ -98,13 +104,18 @@ export function ChatInterface({
                     <div className="mt-3 pt-3 border-t border-border">
                       <TrialsTable
                         trials={message.results}
-                        totalResults={message.totalResults || message.results.length}
+                        totalResults={
+                          message.totalResults || message.results.length
+                        }
                       />
                     </div>
                   )}
 
                 <p className="text-xs mt-1 opacity-70">
-                  {new Date(message.timestamp).toLocaleTimeString()}
+                  {new Date(message.timestamp).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </p>
               </div>
             </div>
@@ -123,13 +134,38 @@ export function ChatInterface({
       {/* Input Area */}
       <div className="border-t border-border p-4 bg-card">
         <form onSubmit={handleSubmit} className="flex gap-2">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about clinical trials..."
-            className="flex-1"
-            disabled={isLoading}
-          />
+          <div className="flex-1 flex gap-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask about clinical trials..."
+              className="flex-1"
+              disabled={isLoading}
+            />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="shrink-0"
+                  >
+                    <Info className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <div className="text-sm space-y-1">
+                    <p className="font-semibold mb-2">Example questions:</p>
+                    <p>• "Find NSCLC immunotherapy trials"</p>
+                    <p>• "Show me active phase 3 diabetes trials"</p>
+                    <p>• "What are recruiting cancer drug trials?"</p>
+                    <p>• "Find trials sponsored by Pfizer"</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <Button
             type="submit"
             size="icon"
